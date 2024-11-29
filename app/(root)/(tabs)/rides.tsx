@@ -1,10 +1,11 @@
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
+  RefreshControl,
   Text,
   TouchableOpacity,
   View,
@@ -16,31 +17,31 @@ import { format } from "date-fns";
 import RideCard from "@/components/RideCard";
 import { images, icons } from "@/constants";
 import { Ride } from "@/types/type";
+import { OfertaCarona } from "@/global/ofertaCarona";
+import {
+  novaSolicitacao,
+  excluirSolicitacao,
+  listarOfertasCaronas,
+} from "@/service/carona";
 
-const availableRides = [
-  {
-    origin_address: "Vila Ipanema, Ipatinga - MG",
-    destination_address: "Centro, Timóteo - MG",
-    car_seats: 4,
-    origin_latitude: -19.4857015,
-    origin_longitude: -42.5168555,
-    destination_latitude: -19.5388399,
-    destination_longitude: -42.6526619,
-    date: new Date(2024, 10, 30, 7, 0, 0, 0),
-    driver: { name: "Fulano da Silva", matricula: "20241992137" },
-  },
-];
+const ofertasCaronas: OfertaCarona[] = [];
 
 const Rides = () => {
-  const [selectedRide, setSelectedRide] = useState<Ride | null>(null);
+  const [ofertasList, setOfertasList] = useState(ofertasCaronas);
+  const [filteredOfertas, setFilteredOfertas] = useState(ofertasCaronas);
+  const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false); // Estado para controlar o carregamento da atualização
+  const [isLoading, setIsLoading] = useState(false); // Estado para controlar o loading
+
+  const [selectedRide, setSelectedRide] = useState<OfertaCarona | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = ["75%", "40%"];
 
   const handleSignOut = () => {
-    router.replace("/(root)/(auth)/sign-in");
+    router.replace("/(root)/(auth)/login");
   };
 
-  const handleRideSelect = (ride: Ride) => {
+  const handleRideSelect = (ride: OfertaCarona) => {
     setSelectedRide(ride);
     bottomSheetRef.current?.snapToPosition("65%");
   };
@@ -60,18 +61,94 @@ const Rides = () => {
     router.push("/(root)/register-ride");
   };
 
+  const adicionarSolicitacao = async (id: number) => {
+    try {
+      setIsLoading(true);
+      const params = { IdOfertaCarona: id };
+      await novaSolicitacao(params);
+      console.log("Solicitação enviada com sucesso!");
+      buscarOfertas();
+    } catch (error) {
+      console.error("Erro ao enviar solicitação:", error);
+    } finally {
+      setIsLoading(false); // Desativa o carregamento
+      setIsRefreshing(false); // Desativa o refresh
+    }
+    bottomSheetRef.current?.close();
+  };
+
+  const excluir = async (id: number) => {
+    console.log("Excluiindo");
+    try {
+      setIsLoading(true);
+      const params = { Id: id };
+      await excluirSolicitacao(params);
+      console.log("Solicitação enviada com sucesso!");
+      buscarOfertas();
+    } catch (error) {
+      console.error("Erro ao enviar solicitação:", error);
+    } finally {
+      setIsLoading(false); // Desativa o carregamento
+      setIsRefreshing(false); // Desativa o refresh
+    }
+    bottomSheetRef.current?.close();
+  };
+
+  const buscarOfertas = async () => {
+    try {
+      setIsLoading(true);
+      const ofertas = await listarOfertasCaronas();
+      setOfertasList(ofertas);
+      setFilteredOfertas(ofertas);
+    } catch (error) {
+      console.error("Erro ao buscar ofertas de carona:", error);
+    } finally {
+      setIsLoading(false); // Desativa o carregamento
+      setIsRefreshing(false); // Desativa o refresh
+    }
+  };
+
+  useEffect(() => {
+    buscarOfertas();
+  }, []); // O array vazio garante que o useEffect execute apenas uma vez
+
   const loading = false;
+
+  const filterOfertas = (searchTerm: string) => {
+    if (!searchTerm) {
+      setFilteredOfertas(ofertasList);
+    } else {
+      const lowerTerm = searchTerm.toLowerCase();
+
+      const filtered = ofertasList.filter(
+        (oferta) =>
+          oferta.saida.toLowerCase().includes(lowerTerm) ||
+          oferta.destino.toLowerCase().includes(lowerTerm) ||
+          oferta.pontosReferencia.toLowerCase().includes(lowerTerm),
+      );
+      console.log(filtered);
+
+      setFilteredOfertas(filtered);
+    }
+  };
 
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaView className="bg-general-500 flex-1">
         <FlatList
-          data={availableRides}
-          renderItem={({ item }) => (
+          data={ofertasList}
+          keyExtractor={(item, index) => item.id.toString()}
+          renderItem={({ item, index }) => (
             <TouchableOpacity onPress={() => handleRideSelect(item)}>
               <RideCard ride={item} />
             </TouchableOpacity>
           )}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={buscarOfertas}
+            />
+          }
           className="px-5"
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
@@ -141,7 +218,7 @@ const Rides = () => {
               <View className="flex flex-row items-center justify-between mb-4">
                 <View className="flex flex-row items-center">
                   <Text className="text-md font-JakartaSemiBold">
-                    Nome: {selectedRide.driver.name}
+                    Nome: {selectedRide.nomePessoaOfertante}
                   </Text>
                 </View>
               </View>
@@ -150,38 +227,54 @@ const Rides = () => {
                 <View className="flex flex-row justify-between mb-2">
                   <Text className="font-JakartaRegular">De:</Text>
                   <Text className="font-JakartaSemiBold">
-                    {selectedRide.origin_address}
+                    {selectedRide.saida}
                   </Text>
                 </View>
                 <View className="flex flex-row justify-between mb-2">
                   <Text className="font-JakartaRegular">Para:</Text>
                   <Text className="font-JakartaSemiBold">
-                    {selectedRide.destination_address}
+                    {selectedRide.destino}
                   </Text>
                 </View>
                 <View className="flex flex-row justify-between mb-2">
                   <Text className="font-JakartaRegular">Data & Horário:</Text>
                   <Text className="font-JakartaSemiBold">
-                    {format(selectedRide.date, "dd LLL yyyy, HH:mm")}
+                    {format(selectedRide.dataCarona, "dd LLL yyyy, HH:mm")}
                   </Text>
                 </View>
                 <View className="flex flex-row justify-between">
                   <Text className="font-JakartaRegular">Vagas:</Text>
                   <Text className="font-JakartaSemiBold">
-                    {selectedRide.car_seats}
+                    {selectedRide.nVagasRestantes} / {selectedRide.nVagas}
                   </Text>
                 </View>
               </View>
 
               <View className="flex flex-row justify-center items-center">
-                <TouchableOpacity
-                  onPress={handleConfirmRide}
-                  className="bg-blue-950 px-6 py-3 rounded-full justify-center"
-                >
-                  <Text className="text-white font-JakartaSemiBold">
-                    Solicitar Carona
-                  </Text>
-                </TouchableOpacity>
+                {/* Logic */}
+                {selectedRide.meuStatusSolicitacao === null &&
+                  !selectedRide.minhaOferta && (
+                    <TouchableOpacity
+                      className="bg-blue-950 px-6 py-3 rounded-full justify-center"
+                      onPress={() => adicionarSolicitacao(selectedRide.id)}
+                    >
+                      <Text className="text-white font-JakartaSemiBold">
+                        Solicitar
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                {selectedRide.meuStatusSolicitacao !== null &&
+                  !selectedRide.minhaOferta &&
+                  selectedRide.meuStatusSolicitacao === "Aguardando" && (
+                    <TouchableOpacity
+                      className="bg-red-950 px-6 py-3 rounded-full justify-center"
+                      onPress={() => excluir(selectedRide.idMinhaSolicitacao)}
+                    >
+                      <Text className="text-white font-JakartaSemiBold">
+                        Cancelar
+                      </Text>
+                    </TouchableOpacity>
+                  )}
               </View>
             </BottomSheetScrollView>
           )}

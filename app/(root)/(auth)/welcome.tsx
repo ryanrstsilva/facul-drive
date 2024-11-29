@@ -17,7 +17,7 @@ const Onboarding = () => {
       <StatusBar style="dark" />
       <TouchableOpacity
         onPress={() => {
-          router.replace("/(root)/(auth)/sign-up");
+          router.replace("/(root)/(auth)/register");
         }}
         className="w-full flex justify-end items-end p-5"
       >
@@ -60,7 +60,7 @@ const Onboarding = () => {
         title={isLastSlide ? "Get Started" : "Next"}
         onPress={() =>
           isLastSlide
-            ? router.replace("/(root)/(auth)/sign-up")
+            ? router.replace("/(root)/(auth)/register")
             : swiperRef.current?.scrollBy(1)
         }
         className="w-11/12 mt-10"

@@ -34,18 +34,29 @@ declare interface MapProps {
 }
 
 declare interface Ride {
-  origin_address: string;
-  destination_address: string;
-  car_seats: number;
-  origin_latitude: number;
-  origin_longitude: number;
-  destination_latitude: number;
-  destination_longitude: number;
-  date: Date;
-  driver: {
-    name: string;
-    matricula: string;
-  };
+  // origin_address: string;
+  // destination_address: string;
+  // car_seats: number;
+  // origin_latitude: number;
+  // origin_longitude: number;
+  // destination_latitude: number;
+  // destination_longitude: number;
+  // date: Date;
+  // driver: {
+  //   name: string;
+  //   matricula: string;
+  // };
+  id: number;
+  nVagas: number;
+  nVagasRestantes: number;
+  saida: string;
+  destino: string;
+  pontosReferencia: string;
+  dataCarona: string;
+  nomePessoaOfertante: string;
+  meuStatusSolicitacao: string;
+  idMinhaSolicitacao: number;
+  minhaOferta: boolean;
 }
 
 declare interface RecentRide {
@@ -97,6 +108,7 @@ declare interface GoogleInputProps {
     longitude: number;
     address: string;
   }) => void;
+  placeholder: string;
 }
 
 declare interface InputFieldProps extends TextInputProps {

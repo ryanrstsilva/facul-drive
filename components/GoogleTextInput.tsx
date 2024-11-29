@@ -14,6 +14,7 @@ const GoogleTextInput = ({
   containerStyle,
   textInputBackgroundColor,
   handlePress,
+  placeholder,
 }: GoogleInputProps) => {
   const { userLatitude, userLongitude, userAddress } = useLocationStore();
 
@@ -23,7 +24,7 @@ const GoogleTextInput = ({
     >
       <GooglePlacesAutocomplete
         fetchDetails={true}
-        placeholder="Quer uma carona pra onde?"
+        placeholder={placeholder}
         debounce={200}
         styles={{
           textInputContainer: {
@@ -99,7 +100,7 @@ const GoogleTextInput = ({
         )}
         textInputProps={{
           placeholderTextColor: "gray",
-          placeholder: initialLocation ?? "Quer uma carona pra onde?",
+          placeholder: initialLocation ?? placeholder,
         }}
         enablePoweredByContainer={false}
       />

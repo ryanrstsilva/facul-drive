@@ -3,18 +3,24 @@ import { images, icons } from "@/constants";
 import { useState } from "react";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
-import { Link, router } from "expo-router";
+import { Link } from "expo-router";
 import OAuth from "@/components/OAuth";
+import { ReactNativeModal } from "react-native-modal";
 
-const SignIn = () => {
+const Register = () => {
   const [form, setForm] = useState({
-    email: "",
+    name: "",
+    cpf: "",
     password: "",
   });
 
-  const onSignInPress = async () => {
-    router.replace("/(root)/(tabs)/hitchhiking");
-  };
+  const [verification, setVerification] = useState({
+    state: "default",
+    error: "",
+    code: "",
+  });
+
+  const onSignUpPress = async () => {};
 
   return (
     <ScrollView className="flex-1 bg-white">
@@ -22,17 +28,24 @@ const SignIn = () => {
         <View className="relative w-full h-[250px]">
           <Image source={images.signUpCar} className="z-0 w-full h-[250px]" />
           <Text className="text-2xl text-black font-JakartaSemiBold absolute bottom-5 left-5">
-            Bem-vindo 👋
+            Crie sua conta
           </Text>
         </View>
 
         <View className="p-5">
           <InputField
-            label="Email"
-            placeholder="Digite seu emai"
+            label="Nome"
+            placeholder="Digite seu nome"
+            icon={icons.person}
+            value={form.name}
+            onChangeText={(value) => setForm({ ...form, name: value })}
+          />
+          <InputField
+            label="CPF"
+            placeholder="Digite seu CPF"
             icon={icons.email}
-            value={form.email}
-            onChangeText={(value) => setForm({ ...form, email: value })}
+            value={form.cpf}
+            onChangeText={(value) => setForm({ ...form, cpf: value })}
           />
           <InputField
             label="Senha"
@@ -44,26 +57,33 @@ const SignIn = () => {
           />
 
           <CustomButton
-            title="Sign In"
-            onPress={onSignInPress}
+            title="Cadastrar"
+            onPress={onSignUpPress}
             className="mt-6"
           />
 
           <OAuth />
 
           <Link
-            href="/sign-up"
+            href="/login"
             className="text-lg text-center text-general-200 mt-10"
           >
-            <Text>Ainda não tem uma conta? </Text>
-            <Text className="text-primary-500">Cadastre-se</Text>
+            <Text>Já tem uma conta? </Text>
+            <Text className="text-primary-500">Entre</Text>
           </Link>
         </View>
 
-        {/* Verification Modal */}
+        <ReactNativeModal isVisible={verification.state === "success"}>
+          <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+            <Image
+              source={images.check}
+              className="w-[110px] h-[110px] mx-auto my-5"
+            />
+          </View>
+        </ReactNativeModal>
       </View>
     </ScrollView>
   );
 };
 
-export default SignIn;
+export default Register;

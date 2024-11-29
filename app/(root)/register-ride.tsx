@@ -9,6 +9,10 @@ import GoogleTextInput from "@/components/GoogleTextInput";
 import CustomButton from "@/components/CustomButton";
 import { useLocationStore } from "@/store";
 
+import { novaOferta } from "@/service/carona";
+import { OfertaCarona } from "@/global/ofertaCarona";
+import { format } from "date-fns";
+
 const RegisterRide = () => {
   const {
     userAddress,
@@ -20,18 +24,6 @@ const RegisterRide = () => {
   const [date, setDate] = useState(new Date());
   const [mode, setMode] = useState<"date" | "time" | undefined>();
   const [showPicker, setShowPicker] = useState(false);
-  const [txDate, setTxDate] = useState(
-    `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}/${date.getFullYear()}`
-  );
-  const [txTime, setTxTime] = useState(
-    `${date.getHours().toString().padStart(2, "0")}:${date
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`
-  );
-
   const showDatePicker = () => setShowPicker(true);
 
   const showMode = (currentMode: any) => {
@@ -46,22 +38,6 @@ const RegisterRide = () => {
     setDate(currentDate);
 
     const tempDate = new Date(currentDate);
-
-    // Formatação de data
-    const fDate = `${tempDate.getDate().toString().padStart(2, "0")}/${(
-      tempDate.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}/${tempDate.getFullYear()}`;
-
-    // Formatação de hora
-    const fTime = `${tempDate.getHours().toString().padStart(2, "0")}:${tempDate
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`;
-
-    setTxDate(fDate);
-    setTxTime(fTime);
   };
 
   const [seats, setSeats] = useState(1);
@@ -73,6 +49,48 @@ const RegisterRide = () => {
     } else if (action === "decrease" && seats > 1) {
       setSeats(seats - 1);
     }
+  };
+
+  const [isLoading, setIsLoading] = useState(false); // Estado para controlar o loading
+
+  const handleregister = () => {
+    const ride: OfertaCarona = {
+      saida: userAddress || "",
+      destino: destinationAddress || "",
+      pontosReferencia: "",
+      dataCarona: date,
+      id: 0,
+      nVagas: 4,
+      nVagasRestantes: 0,
+      nomePessoaOfertante: "",
+      meuStatusSolicitacao: "",
+      idMinhaSolicitacao: 0,
+      minhaOferta: false,
+    };
+
+    registrarCarona(ride);
+  };
+
+  const registrarCarona = async (ride: OfertaCarona) => {
+    try {
+      setIsLoading(true);
+      const params = {
+        NVagas: ride.nVagas,
+        Saida: ride.saida,
+        Destino: ride.destino,
+        PontosReferencia: ride.pontosReferencia,
+        DataCarona: format(ride.dataCarona, "dd LLL yyyy, HH:mm"),
+      };
+      await novaOferta(params);
+      console.log("Carona registrada com sucesso!");
+      // buscarOfertas();
+    } catch (error) {
+      console.error("Erro ao registrar carona:", error);
+    } finally {
+      setIsLoading(false); // Desativa o carregamento
+      // setIsRefreshing(false); // Desativa o refresh
+    }
+    router.back();
   };
 
   return (
@@ -107,6 +125,7 @@ const RegisterRide = () => {
             containerStyle="bg-neutral-100"
             textInputBackgroundColor="#f5f5f5"
             handlePress={(location) => setUserLocation(location)}
+            placeholder="Saindo de"
           />
         </View>
 
@@ -119,6 +138,7 @@ const RegisterRide = () => {
             containerStyle="bg-neutral-100"
             textInputBackgroundColor="transparent"
             handlePress={(location) => setDestinationLocation(location)}
+            placeholder="Está indo para onde?"
           />
         </View>
 
@@ -129,7 +149,9 @@ const RegisterRide = () => {
             onPress={() => showMode("date")}
             className="bg-neutral-100 p-4 rounded-lg"
           >
-            <Text className="text-lg text-gray-600">{txDate}</Text>
+            <Text className="text-lg text-gray-600">
+              {format(date, "dd/MM/yyyy")}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -140,7 +162,9 @@ const RegisterRide = () => {
             onPress={() => showMode("time")}
             className="bg-neutral-100 p-4 rounded-lg"
           >
-            <Text className="text-lg text-gray-600">{txTime}</Text>
+            <Text className="text-lg text-gray-600">
+              {format(date, "HH:mm")}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -149,9 +173,7 @@ const RegisterRide = () => {
           <Text className="text-lg font-JakartaSemiBold mb-2">Vagas:</Text>
           <View className="flex-row items-center bg-neutral-100 p-4 rounded-lg justify-between">
             {/* Número de assentos */}
-            <Text className="text-lg font-JakartaRegular">
-              {seats}
-            </Text>
+            <Text className="text-lg font-JakartaRegular">{seats}</Text>
 
             {/* Botões de incremento/decremento */}
             <View className="flex-row items-center">
@@ -200,7 +222,7 @@ const RegisterRide = () => {
         {/* Submit Button */}
         <CustomButton
           title="Registrar Carona"
-          onPress={() => console.log("Find Now pressed")}
+          onPress={() => handleregister()}
           className="mt-10"
         />
       </View>

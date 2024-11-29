@@ -2,8 +2,11 @@ import { View, Text, Image } from "react-native";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 
+// Componente
 const OAuth = () => {
-  const handleGoogleSignIn = async () => {};
+  const handleGoogleSignIn = async () => {
+    alert("Em breve!");
+  };
 
   return (
     <View>
@@ -14,7 +17,7 @@ const OAuth = () => {
       </View>
 
       <CustomButton
-        title="Log In with Google"
+        title="Entre com o Google"
         className="mt-5 w-full shadow-none"
         IconLeft={() => (
           <Image
