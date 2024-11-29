@@ -16,7 +16,7 @@ interface NovaCaronaParams {
   Saida: string;
   Destino: string;
   PontosReferencia: string;
-  DataCarona: string; // Talvez trocar pra Date.
+  DataCarona: string;
 }
 
 export const novaOferta = (params: NovaCaronaParams): Promise<void> => {
@@ -27,6 +27,7 @@ export const novaOferta = (params: NovaCaronaParams): Promise<void> => {
       },
     };
 
+    console.log(params.DataCarona);
     api
       .post("Carona/CadastroOfertaCarona", params, config)
       .then((response) => {

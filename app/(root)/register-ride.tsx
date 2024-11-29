@@ -79,7 +79,7 @@ const RegisterRide = () => {
         Saida: ride.saida,
         Destino: ride.destino,
         PontosReferencia: ride.pontosReferencia,
-        DataCarona: format(ride.dataCarona, "dd LLL yyyy, HH:mm"),
+        DataCarona: format(ride.dataCarona, "yyyy-MM-dd'T'HH:mm:ss.000000"),
       };
       await novaOferta(params);
       console.log("Carona registrada com sucesso!");
