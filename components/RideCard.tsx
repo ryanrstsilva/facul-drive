@@ -4,12 +4,24 @@ import { format } from "date-fns";
 import { icons } from "@/constants";
 import { Ride } from "@/types/type";
 import { OfertaCarona } from "@/global/ofertaCarona";
+import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps";
 
 const RideCard = ({ ride }: { ride: OfertaCarona }) => {
   return (
     <View className="flex flex-row items-center justify-center bg-white rounded-lg shadow-sm shadow-neutral-300 mb-3">
       <View className="flex flex-col items-center justify-center p-3 ">
         <View className="flex flex-row items-center justify-between">
+          {/* <MapView
+            provider={PROVIDER_GOOGLE}
+            style={{ flex: 1 }}
+            mapType="mutedStandard"
+            userInterfaceStyle="light"
+            initialRegion={{
+              latitude: ride.saida_latitude,
+              longitude: ride.saida_longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}></MapView> */}
           {/* <Image
             source={{
               uri: `https://maps.googleapis.com/maps/api/staticmap?center=${ride.destination_latitude},${ride.destination_longitude}&zoom=14&size=200x200&maptype=roadmap&markers=color:red%7Clabel:S%7C${ride.destination_latitude},${ride.destination_longitude}&key=${process.env.EXPO_PUBLIC_GOOGLE_API_KEY}`,

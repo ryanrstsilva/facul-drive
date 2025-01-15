@@ -220,7 +220,7 @@ const Home = () => {
       setFilteredSolicitacoes(solicitacoes);
       console.log("Ofertas de carona:", solicitacoes);
     } catch (error) {
-      console.error("Erro ao buscar ofertas de carona:", error);
+      console.error("Erro ao buscar solicitações de carona:", error);
     } finally {
       setIsLoading(false); // Desativa o carregamento
       setIsRefreshing(false); // Desativa o refresh

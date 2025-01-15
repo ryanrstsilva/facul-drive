@@ -51,12 +51,23 @@ export const listarOfertasCaronas = (): Promise<OfertaCarona[]> => {
     api
       .get<OfertaCarona[]>("Carona/ListarOfertasCaronas", config)
       .then((response) => {
+        // if (!response.ok) {
+        //   reject(new Error(`HTTP error! status: ${response.status}`));
+        //   return;
+        // }
+        // if (!response.data) {
+        //   reject(new Error('Nenhum dado recebido da API'));
+        //   return;
+        // }
         if (response.data && response.ok) {
           resolve(response.data);
         }
         reject(response.data);
       })
-      .catch((error) => reject(error));
+      .catch((error) => reject(error));[]
+      // .catch((error) => {
+      //   reject(error?.message || 'Erro ao buscar ofertas de carona');
+      //   });
   });
 };
 
