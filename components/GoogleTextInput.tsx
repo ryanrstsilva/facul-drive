@@ -78,6 +78,7 @@ const GoogleTextInput = ({
             latitude: details?.geometry.location.lat!,
             longitude: details?.geometry.location.lng!,
             address: data.description,
+            placeId: details?.place_id!,
           });
         }}
         query={{

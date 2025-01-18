@@ -19,6 +19,10 @@ interface NovaCaronaParams {
   DataCarona: string;
 }
 
+interface DeletarOfertaParams {
+  Id: number;
+}
+
 export const novaOferta = (params: NovaCaronaParams): Promise<void> => {
   return new Promise((resolve, reject) => {
     const config = {
@@ -35,11 +39,33 @@ export const novaOferta = (params: NovaCaronaParams): Promise<void> => {
           resolve();
         } else {
           reject(response.data || "Erro ao enviar solicitação.");
+          console.log("Log" + response.data);
         }
       })
       .catch((error) => reject(error));
   });
 };
+
+export const deletarOferta = (params: DeletarOfertaParams): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    api
+      .delete(`Carona/DeletarOfertaCarona/${params.Id}`, config)
+      .then((response) => {
+        if (response.ok) {
+          resolve();
+        } else {
+          reject(response.data || "Erro ao deletar oferta.");
+        }
+      })
+      .catch((error) => reject(error));
+    });
+  };
 
 export const listarOfertasCaronas = (): Promise<OfertaCarona[]> => {
   return new Promise((resolve, reject) => {

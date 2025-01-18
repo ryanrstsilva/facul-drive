@@ -103,10 +103,12 @@ declare interface GoogleInputProps {
     latitude,
     longitude,
     address,
+    placeId,
   }: {
     latitude: number;
     longitude: number;
     address: string;
+    placeId: string;
   }) => void;
   placeholder: string;
 }
@@ -134,26 +136,50 @@ declare interface LocationStore {
   userLatitude: number | null;
   userLongitude: number | null;
   userAddress: string | null;
+  userPlaceId: string | null;
   destinationLatitude: number | null;
   destinationLongitude: number | null;
   destinationAddress: string | null;
+  destinationPlaceId: string | null;
+  referenceLatitude: number | null;
+  referenceLongitude: number | null;
+  referenceAddress: string | null;
+  referencePlaceId: string | null;
+  
   setUserLocation: ({
     latitude,
     longitude,
     address,
+    placeId,
   }: {
     latitude: number;
     longitude: number;
     address: string;
+    placeId: string;
   }) => void;
+  
   setDestinationLocation: ({
     latitude,
     longitude,
     address,
+    placeId,
   }: {
     latitude: number;
     longitude: number;
     address: string;
+    placeId: string;
+  }) => void;
+
+  setReferencePoint: ({
+    latitude,
+    longitude,
+    address,
+    placeId,
+  }: {
+    latitude: number;
+    longitude: number;
+    address: string;
+    placeId: string;
   }) => void;
 }
 

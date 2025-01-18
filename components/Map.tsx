@@ -25,7 +25,7 @@ const Map = () => {
       <MapView
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
-        mapType="mutedStandard"
+        mapType="standard"
         showsUserLocation={true}
         userInterfaceStyle="light"
         initialRegion={region}

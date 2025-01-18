@@ -31,7 +31,7 @@ export const signUp = ({
       userName: cpf,
       password: password,
       confirmPassword: password,
-      role: "string"
+      role: "string",
     };
     
     console.log("📝 Payload do registro:", payload);

@@ -1,39 +1,89 @@
 import { Image, Text, View } from "react-native";
 import { format } from "date-fns";
+import { useState, useEffect } from "react";
+import { decode } from "@mapbox/polyline";
 
 import { icons } from "@/constants";
-import { Ride } from "@/types/type";
 import { OfertaCarona } from "@/global/ofertaCarona";
-import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps";
 
 const RideCard = ({ ride }: { ride: OfertaCarona }) => {
+  const [polylinePoints, setPolylinePoints] = useState<string>("");
+  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  
+  const origin = ride.saida.split("|")[1];
+  const destination = ride.destino.split("|")[1];
+  const googleApiKey = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+
+    useEffect(() => {
+    getDirections();
+  }, []);
+
+  const getDirections = async () => {
+    try {
+      const apiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=place_id:${origin}&destination=place_id:${destination}&key=${googleApiKey}`;
+
+      const result = await fetch(apiUrl);
+      const json = await result.json();
+
+      if (!json.routes[0]) {
+        throw new Error('Não foi possível encontrar uma rota');
+      }
+
+      // Obtém a polyline codificada diretamente da resposta
+      const encodedPolyline = json.routes[0].overview_polyline.points;
+      setPolylinePoints(encodedPolyline);
+
+      // Armazena as coordenadas de origem e destino da rota
+      const leg = json.routes[0].legs[0];
+      setOriginCoords({
+        lat: leg.start_location.lat,
+        lng: leg.start_location.lng
+      });
+      setDestCoords({
+        lat: leg.end_location.lat,
+        lng: leg.end_location.lng
+      });
+      
+    } catch (error) {
+      console.error('Error: ', error);
+    }
+  };
+
+  const getStaticMapUrl = () => {
+    if (!originCoords || !destCoords) return '';
+    
+    const baseUrl = "https://maps.googleapis.com/maps/api/staticmap";
+    const size = "300x300";
+    const scale = "2";
+   
+    const paramsObj: Record<string, string> = {
+      size,
+      scale,
+      key: googleApiKey || "",
+      path: `color:0x2563eb|weight:5|enc:${polylinePoints}`, // Cor azul mais bonita
+      markers: [
+        `color:green|label:A|${originCoords.lat},${originCoords.lng}`,
+        `color:red|label:B|${destCoords.lat},${destCoords.lng}`
+      ].join('&markers='),
+      zoom: "auto" // Ajusta o zoom automaticamente para mostrar toda a rota
+    };
+
+    const params = new URLSearchParams(paramsObj);
+    return `${baseUrl}?${params.toString()}`;
+  };
+
+  
   return (
-    <View className="flex flex-row items-center justify-center bg-white rounded-lg shadow-sm shadow-neutral-300 mb-3">
+    <View className="flex flex-row items-center justify-center bg-transparent rounded-lg shadow-sm shadow-neutral-300 mb-3">
       <View className="flex flex-col items-center justify-center p-3 ">
         <View className="flex flex-row items-center justify-between">
-          {/* <MapView
-            provider={PROVIDER_GOOGLE}
-            style={{ flex: 1 }}
-            mapType="mutedStandard"
-            userInterfaceStyle="light"
-            initialRegion={{
-              latitude: ride.saida_latitude,
-              longitude: ride.saida_longitude,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}></MapView> */}
-          {/* <Image
-            source={{
-              uri: `https://maps.googleapis.com/maps/api/staticmap?center=${ride.destination_latitude},${ride.destination_longitude}&zoom=14&size=200x200&maptype=roadmap&markers=color:red%7Clabel:S%7C${ride.destination_latitude},${ride.destination_longitude}&key=${process.env.EXPO_PUBLIC_GOOGLE_API_KEY}`,
-            }}
-            className="w-[100px] h-[100px] rounded-lg"
-          /> */}
           <View className="flex flex-col mx-5 gap-y-5 flex-1">
             {/* Origin */}
             <View className="flex flex-row items-center gap-x-2">
               <Image source={icons.to} className="w-5 h-5" />
               <Text className="text-md font-JakartaMedium" numberOfLines={2}>
-                {ride.saida}
+                {ride.saida.split("|")[0]}
               </Text>
             </View>
 
@@ -41,7 +91,7 @@ const RideCard = ({ ride }: { ride: OfertaCarona }) => {
             <View className="flex flex-row items-center gap-x-2">
               <Image source={icons.point} className="w-5 h-5" />
               <Text className="text-md font-JakartaMedium" numberOfLines={2}>
-                {ride.destino}
+                {ride.destino.split("|")[0]}
               </Text>
             </View>
           </View>

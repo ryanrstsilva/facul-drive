@@ -19,6 +19,7 @@ import { images, icons } from "@/constants";
 import { Ride } from "@/types/type";
 import { OfertaCarona } from "@/global/ofertaCarona";
 import {
+  deletarOferta,
   novaSolicitacao,
   excluirSolicitacao,
   listarOfertasCaronas,
@@ -27,6 +28,15 @@ import {
 const ofertasCaronas: OfertaCarona[] = [];
 
 const Rides = () => {
+  const [polylinePoints, setPolylinePoints] = useState<string>("");
+  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [refCoords, setRefCoords] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // const origin = "";
+  // const destination = "";
+  const googleApiKey = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+  
   const [ofertasList, setOfertasList] = useState(ofertasCaronas);
   const [filteredOfertas, setFilteredOfertas] = useState(ofertasCaronas);
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
@@ -35,16 +45,84 @@ const Rides = () => {
 
   const [selectedRide, setSelectedRide] = useState<OfertaCarona | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = ["75%", "40%"];
+  const snapPoints = ["95%", "55%"];
 
   const handleSignOut = () => {
     router.replace("/(root)/(auth)/login");
   };
 
-  const handleRideSelect = (ride: OfertaCarona) => {
+  const handleRideSelect = async (ride: OfertaCarona) => {
     setSelectedRide(ride);
-    bottomSheetRef.current?.snapToPosition("65%");
-  };
+    // Reset coordinates
+    setRefCoords(null);
+    setOriginCoords(null);
+    setDestCoords(null);
+    setPolylinePoints("");
+    bottomSheetRef.current?.snapToPosition("95%");
+    
+    try {
+      const origin = ride.saida.split("|")[1];
+      const destination = ride.destino.split("|")[1];
+      
+      let apiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=place_id:${origin}&destination=place_id:${destination}`;
+
+      let hasWaypoint = false;
+      // Adicionar waypoint se houver ponto de referência
+      if (ride.pontosReferencia && ride.pontosReferencia !== "") {
+        const reference = ride.pontosReferencia.split("|")[1];
+        // Adiciona o waypoint usando place_id
+        apiUrl += `&waypoints=place_id:${reference}`;
+        // Otimiza a rota
+        apiUrl += "&optimize=true";
+        hasWaypoint = true;
+      }
+
+      // Adiciona a chave da API
+      apiUrl += `&key=${googleApiKey}`;
+      
+      const result = await fetch(apiUrl);
+      const json = await result.json();
+
+      if (!json.routes[0]) {
+        throw new Error('Não foi possível encontrar uma rota');
+      }
+
+      const route = json.routes[0];
+      const legs = route.legs;
+
+      setPolylinePoints(route.overview_polyline.points);
+
+      if (hasWaypoint && legs.length === 2) {
+        // Com waypoint:
+        // legs[0] é origem -> ponto de referência
+        // legs[1] é ponto de referência -> destino
+        setOriginCoords({
+          lat: legs[0].start_location.lat,
+          lng: legs[0].start_location.lng
+        });
+        setRefCoords({
+          lat: legs[0].end_location.lat,
+          lng: legs[0].end_location.lng
+        });
+        setDestCoords({
+          lat: legs[1].end_location.lat,
+          lng: legs[1].end_location.lng
+        });
+      } else {
+        // Sem waypoint: apenas origem -> destino
+        setOriginCoords({
+          lat: legs[0].start_location.lat,
+          lng: legs[0].start_location.lng
+        });
+        setDestCoords({
+          lat: legs[0].end_location.lat,
+          lng: legs[0].end_location.lng
+        });
+      }
+    } catch (error) {
+      console.error('Error getting directions:', error);
+    }
+  }
 
   const handleCloseBottomSheet = () => {
     bottomSheetRef.current?.close(); // Close bottom sheet
@@ -59,6 +137,22 @@ const Rides = () => {
 
   const handleRegisterRide = () => {
     router.push("/(root)/register-ride");
+  };
+
+  const deletarCarona = async (id: number) => {
+    try {
+      setIsLoading(true);
+      const params = { Id: id };
+      await deletarOferta(params);
+      console.log("tentativa de deletar!");
+      buscarOfertas();
+    } catch (error) {
+      console.error("Erro ao deletar oferta:", error);
+    } finally {
+      setIsLoading(false); // Desativa o carregamento
+      setIsRefreshing(false); // Desativa o refresh
+    }
+    bottomSheetRef.current?.close();
   };
 
   const adicionarSolicitacao = async (id: number) => {
@@ -78,7 +172,7 @@ const Rides = () => {
   };
 
   const excluir = async (id: number) => {
-    console.log("Excluiindo");
+    console.log("Excluindo");
     try {
       setIsLoading(true);
       const params = { Id: id };
@@ -111,6 +205,39 @@ const Rides = () => {
   useEffect(() => {
     buscarOfertas();
   }, []); // O array vazio garante que o useEffect execute apenas uma vez
+
+  const getStaticMapUrl = () => {
+  if (!originCoords || !destCoords || !polylinePoints) return '';
+  
+  const baseUrl = "https://maps.googleapis.com/maps/api/staticmap";
+  const size = "250x250"; // Ajustado para o BottomSheet
+  const scale = "2";
+  const path = `color:0x2563eb|weight:5|enc:${polylinePoints}`;
+  // Initialize markers array with required points
+    const markers: string[] = [
+      `color:green|label:A|${originCoords.lat},${originCoords.lng}`,
+      `color:red|label:B|${destCoords.lat},${destCoords.lng}`
+    ];
+
+  // Add reference point marker if it exists
+    if (refCoords && selectedRide?.pontosReferencia && selectedRide.pontosReferencia !== "") {
+      markers.push(`color:yellow|label:R|${refCoords.lat},${refCoords.lng}`);
+    }
+
+  const paramsObj: Record<string, string> = {
+    size,
+    scale,
+    key: googleApiKey || "",
+    path,
+    zoom: "auto"
+  };
+
+  const params = new URLSearchParams(paramsObj);
+  markers.forEach(marker => params.append('markers', marker));
+
+  //console.log(`${baseUrl}?${params.toString()}`);
+  return `${baseUrl}?${params.toString()}`;
+};
 
   const loading = false;
 
@@ -215,6 +342,20 @@ const Rides = () => {
                 Detalhes
               </Text>
 
+              <View className="w-full h-[250px] rounded-lg overflow-hidden mb-4">
+                {polylinePoints && originCoords && destCoords ? (
+                  <Image
+                    source={{ uri: getStaticMapUrl() }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-full h-full items-center justify-center bg-gray-100">
+                    <ActivityIndicator size="large" color="#2563eb" />
+                  </View>
+                )}
+              </View>
+
               <View className="flex flex-row items-center justify-between mb-4">
                 <View className="flex flex-row items-center">
                   <Text className="text-md font-JakartaSemiBold">
@@ -224,18 +365,21 @@ const Rides = () => {
               </View>
 
               <View className="bg-gray-100 rounded-xl p-4 mb-4">
+                
                 <View className="flex flex-row justify-between mb-2">
-                  <Text className="font-JakartaRegular">De:</Text>
-                  <Text className="font-JakartaSemiBold">
-                    {selectedRide.saida}
+                  <Text className="font-JakartaRegular">De: </Text>
+                  <Text className="font-JakartaSemiBold justifyContent">
+                    {selectedRide.saida.split("|")[0]}
                   </Text>
                 </View>
+
                 <View className="flex flex-row justify-between mb-2">
-                  <Text className="font-JakartaRegular">Para:</Text>
+                  <Text className="font-JakartaRegular">Para: </Text>
                   <Text className="font-JakartaSemiBold">
-                    {selectedRide.destino}
+                    {selectedRide.destino.split("|")[0]}
                   </Text>
                 </View>
+
                 <View className="flex flex-row justify-between mb-2">
                   <Text className="font-JakartaRegular">Data & Horário:</Text>
                   <Text className="font-JakartaSemiBold">
@@ -275,6 +419,16 @@ const Rides = () => {
                       </Text>
                     </TouchableOpacity>
                   )}
+                  {selectedRide.minhaOferta && (
+                <TouchableOpacity
+                  className="bg-red-950 px-6 py-3 rounded-full justify-center"
+                  onPress={() => deletarCarona(selectedRide.id)}
+                >
+                  <Text className="text-white font-JakartaSemiBold">
+                    Excluir
+                  </Text>
+                </TouchableOpacity>
+              )}
               </View>
             </BottomSheetScrollView>
           )}
