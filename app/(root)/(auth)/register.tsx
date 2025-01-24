@@ -26,16 +26,16 @@ const Register = () => {
   const onSignUpPress = async () => {
     setLoading(true);
     try {
-      // Remove caracteres não numéricos do CPF
-      const rawCpf = form.cpf.replace(/\D/g, "");
+      // // Remove caracteres não numéricos do CPF
+      // const rawCpf = form.cpf.replace(/\D/g, "");
       
       // Validações básicas
       if (!form.name.trim()) {
         throw new Error("Nome é obrigatório");
       }
-      if (rawCpf.length !== 11) {
-        throw new Error("CPF inválido");
-      }
+      // if (rawCpf.length !== 11) {
+      //   throw new Error("CPF inválido");
+      // }
       if (form.password.length < 8) {
         throw new Error("Senha deve ter no mínimo 8 caracteres");
       }
@@ -45,7 +45,7 @@ const Register = () => {
       // Chama a função de registro
       await signUp({
         name: form.name.trim(),
-        cpf: rawCpf,
+        cpf: form.cpf,
         password: form.password,
       });
 
@@ -108,8 +108,8 @@ const Register = () => {
             onChangeText={(value) => setForm({ ...form, name: value })}
           />
           <InputField
-            label="CPF"
-            placeholder="Digite seu CPF"
+            label="Email"
+            placeholder="Digite seu Email"
             icon={icons.email}
             value={form.cpf}
             onChangeText={(value) => setForm({ ...form, cpf: value })}

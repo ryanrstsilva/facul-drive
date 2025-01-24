@@ -83,6 +83,8 @@ const Rides = () => {
       const result = await fetch(apiUrl);
       const json = await result.json();
 
+      console.log(apiUrl);
+
       if (!json.routes[0]) {
         throw new Error('Não foi possível encontrar uma rota');
       }

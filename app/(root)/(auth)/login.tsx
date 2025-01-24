@@ -11,7 +11,7 @@ import { signIn } from "@/service/auth";
 
 const Login = () => {
   const [form, setForm] = useState({
-    cpf: "41542533600",
+    cpf: "ryanrstsilva@gmail.com",
     password: "Mudar@1234",
   });
   const [loading, setLoading] = useState(false);
@@ -19,9 +19,9 @@ const Login = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const rawCpf = form.cpf.replace(/\D/g, "");
+      // const rawCpf = form.cpf.replace(/\D/g, "");
       // Chama a função signIn passando cpf e senha
-      const result = await signIn(rawCpf, form.password);
+      const result = await signIn(form.cpf, form.password);
       // Armazena o token e o refresh token no AsyncStorage
       await AsyncStorage.setItem("token", result.token);
       await AsyncStorage.setItem("refreshToken", result.refreshToken);
@@ -53,8 +53,8 @@ const Login = () => {
 
         <View className="p-5">
           <InputField
-            label="CPF"
-            placeholder="Digite seu CPF"
+            label="Email"
+            placeholder="Digite seu Email"
             icon={icons.email}
             value={form.cpf}
             onChangeText={(value) => setForm({ ...form, cpf: value })}
