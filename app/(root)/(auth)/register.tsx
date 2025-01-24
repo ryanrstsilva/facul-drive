@@ -1,19 +1,30 @@
-import { ScrollView, View, Text, Image, Alert } from "react-native";
-import { images, icons } from "@/constants";
+import { Alert, ScrollView, View, Text, TextStyle, Image } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
+import { Link } from "expo-router";
+import { ReactNativeModal } from "react-native-modal";
+
+import { images, icons } from "@/constants";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
-import { Link } from "expo-router";
 import OAuth from "@/components/OAuth";
-import { ReactNativeModal } from "react-native-modal";
 import { signUp } from "@/service/auth";
 
 const Register = () => {
   const [form, setForm] = useState({
-    name: "",
-    cpf: "",
+    nomePessoa: "",
+    matricula: "",
+    userName: "",
     password: "",
+    confirmPassword: "",
+    telefone: "",
+    email: "",
+  });
+
+  const [validations, setValidations] = useState({
+    telefone: true,
+    password: true,
+    confirmPassword: true
   });
 
   const [loading, setLoading] = useState(false);
@@ -23,30 +34,104 @@ const Register = () => {
     code: "",
   });
 
+   // Validação de telefone
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Limit to 11 digits
+    const truncated = cleaned.slice(0, 11);
+    
+    // Format based on length
+    if (truncated.length <= 2) {
+      return truncated;
+    } else if (truncated.length <= 6) {
+      return `(${truncated.slice(0, 2)}) ${truncated.slice(2)}`;
+    } else if (truncated.length <= 10) {
+      return `(${truncated.slice(0, 2)}) ${truncated.slice(2, 6)}-${truncated.slice(6)}`;
+    } else {
+      return `(${truncated.slice(0, 2)}) ${truncated.slice(2, 7)}-${truncated.slice(7)}`;
+    }
+  };
+
+  // Handle phone number input
+  const handlePhoneInput = (value: string) => {
+    const formatted = formatPhoneNumber(value);
+    setForm({ ...form, telefone: formatted });
+    
+    // Validate phone number (must be 11 digits after formatting)
+    const digitsOnly = formatted.replace(/\D/g, '');
+    setValidations({
+      ...validations,
+      telefone: digitsOnly.length === 11
+    });
+  };
+
+  // Handle password confirmation
+  const handlePasswordConfirmation = (value: string) => {
+    setForm({ ...form, confirmPassword: value });
+    
+    // Check if passwords match
+    setValidations({
+      ...validations,
+      confirmPassword: value === form.password,
+      password: form.password.length >= 8
+    });
+  };
+
+  // Handle password input
+  const handlePasswordInput = (value: string) => {
+    setForm({ ...form, password: value });
+    
+    // Validate password length
+    setValidations({
+      ...validations,
+      password: value.length >= 8,
+      // Reset confirm password validation when main password changes
+      confirmPassword: value === form.confirmPassword
+    });
+  };
+
   const onSignUpPress = async () => {
     setLoading(true);
     try {
-      // // Remove caracteres não numéricos do CPF
-      // const rawCpf = form.cpf.replace(/\D/g, "");
-      
-      // Validações básicas
-      if (!form.name.trim()) {
-        throw new Error("Nome é obrigatório");
+      const rawMatricula = form.matricula.replace(/\D/g, "");
+
+      // Validações Básicas
+      if (!form.nomePessoa.trim()) {
+        throw new Error("Nome é obrigatório.");
       }
-      // if (rawCpf.length !== 11) {
-      //   throw new Error("CPF inválido");
-      // }
-      if (form.password.length < 8) {
-        throw new Error("Senha deve ter no mínimo 8 caracteres");
+
+      if (rawMatricula.length !== 11) {
+        throw new Error("Formato de matrícula inválida (11 caracteres numéricos).");
+      }
+
+      if (!form.email.trim()) {
+        throw new Error("Email é obrigatório.");
+      }
+
+      if (!validations.telefone) {
+        throw new Error("Telefone inválido. Digite 11 dígitos.");
+      }
+
+      if (!validations.password) {
+        throw new Error("Senha deve ter no mínimo 8 caracteres.");
+      }
+
+      if (!validations.confirmPassword) {
+        throw new Error("As senhas não correspondem.");
       }
 
       console.log("🚀 Iniciando cadastro...");
 
       // Chama a função de registro
       await signUp({
-        name: form.name.trim(),
-        cpf: form.cpf,
-        password: form.password,
+        nomePessoa: form.nomePessoa.trim(),
+        matricula: form.matricula.trim(),
+        password: form.password.trim(),
+        confirmPassword: form.confirmPassword.trim(),
+        telefone: form.telefone.trim(),
+        email: form.email.trim(),
       });
 
       console.log("✅ Cadastro realizado com sucesso!");
@@ -89,6 +174,10 @@ const Register = () => {
     }
   };
 
+  const getInputStyle = (isValid: boolean): { borderColor: string } => ({
+    borderColor: isValid ? '#D1D5DB' : '#EF4444'
+  });
+
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="flex-1 bg-white">
@@ -102,25 +191,53 @@ const Register = () => {
         <View className="p-5">
           <InputField
             label="Nome"
-            placeholder="Digite seu nome"
+            placeholder="Nome"
             icon={icons.person}
-            value={form.name}
-            onChangeText={(value) => setForm({ ...form, name: value })}
+            value={form.nomePessoa}
+            onChangeText={(value) => setForm({ ...form, nomePessoa: value })}
           />
+
+          {/* userName e Email */}
           <InputField
             label="Email"
-            placeholder="Digite seu Email"
+            placeholder="Email"
             icon={icons.email}
-            value={form.cpf}
-            onChangeText={(value) => setForm({ ...form, cpf: value })}
+            value={form.email}
+            onChangeText={(value) => setForm({ ...form, email: value })}
           />
+
+          <InputField
+            label="Telefone"
+            placeholder="(31) 91234-1234"
+            icon={icons.phone}
+            value={form.telefone}
+            onChangeText={(value) => setForm({ ...form, telefone: value })}
+          />
+
+          <InputField
+            label="Matrícula"
+            placeholder="Matrícula"
+            icon={icons.person}
+            value={form.matricula}
+            onChangeText={(value) => setForm({ ...form, matricula: value })}
+          />
+
           <InputField
             label="Senha"
-            placeholder="Digite sua senha"
+            placeholder="Senha"
             icon={icons.lock}
             secureTextEntry={true}
             value={form.password}
             onChangeText={(value) => setForm({ ...form, password: value })}
+          />
+
+          <InputField
+            label="Confirme sua senha"
+            placeholder="Senha"
+            icon={icons.lock}
+            secureTextEntry={true}
+            value={form.confirmPassword}
+            onChangeText={(value) => setForm({ ...form, confirmPassword: value })}
           />
 
           <CustomButton
@@ -130,7 +247,7 @@ const Register = () => {
             disabled={loading}
           />
 
-          <OAuth />
+          {/* <OAuth /> */}
 
           <Link
             href="/login"
@@ -147,6 +264,7 @@ const Register = () => {
               source={images.check}
               className="w-[110px] h-[110px] mx-auto my-5"
             />
+            <Text>Confirme seu Email!</Text>
           </View>
         </ReactNativeModal>
       </View>

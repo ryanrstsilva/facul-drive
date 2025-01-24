@@ -3,9 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "./api";
 
 interface SignUpPayload {
-  name: string;
-  cpf: string;
-  password: string;
+  nomePessoa: string,
+  matricula: string,
+  password: string,
+  confirmPassword: string,
+  telefone: string,
+  email: string,
 }
 
 interface SignInResult {
@@ -20,18 +23,23 @@ interface RestoreTokenResult {
 }
 
 export const signUp = ({
-  name,
-  cpf,
-  password,
+    nomePessoa,
+    matricula,
+    password,
+    confirmPassword,
+    telefone,
+    email,
 }: SignUpPayload): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const payload = {
-      nomePessoa: name,
-      matricula: cpf,
-      userName: cpf,
+      nomePessoa: nomePessoa,
+      matricula: matricula,
+      userName: email,
       password: password,
-      confirmPassword: password,
+      confirmPassword: confirmPassword,
       role: "string",
+      email: email,
+      telefone: telefone,
     };
     
     console.log("📝 Payload do registro:", payload);

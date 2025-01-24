@@ -17,6 +17,7 @@ import marker from "@/assets/icons/marker.png";
 import minus from "@/assets/icons/minus2.png";
 import out from "@/assets/icons/out.png";
 import person from "@/assets/icons/person.png";
+import phone from "@/assets/icons/phone.png";
 import pin from "@/assets/icons/pin.png";
 import plus from "@/assets/icons/plus2.png";
 import point from "@/assets/icons/point.png";
@@ -67,6 +68,7 @@ export const icons = {
   minus,
   out,
   person,
+  phone,
   pin,
   plus,
   point,

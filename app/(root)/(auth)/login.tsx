@@ -74,7 +74,7 @@ const Login = () => {
             className="mt-6"
           />
 
-          <OAuth />
+          {/* <OAuth /> */}
 
           <Link
             href="/register"
