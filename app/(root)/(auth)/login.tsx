@@ -11,8 +11,8 @@ import { signIn } from "@/service/auth";
 
 const Login = () => {
   const [form, setForm] = useState({
-    cpf: "ryanrstsilva@gmail.com",
-    password: "Mudar@1234",
+    cpf: "",
+    password: "",
   });
   const [loading, setLoading] = useState(false);
 
