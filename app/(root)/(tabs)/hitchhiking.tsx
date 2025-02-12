@@ -24,6 +24,8 @@ import { format } from "date-fns";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from "react";
+import { configureNotifications, askPermissions, showNotification } from '@/service/notifications';
+
 
 const solicitacoes: SolicitacaoCaronaModel[] = [];
 
@@ -105,28 +107,66 @@ const Home = () => {
     buscarSolicitacoes();
   }, []);
 
+  // Notificações
+  useEffect(() => {
+    // Configura as notificações ao iniciar
+    configureNotifications();
+    askPermissions();
+  }, []);
+
+  // função buscarSolicitacoes modificada para mostrar notificação quando houver novas
+  const buscarSolicitacoes = async () => {
+    try {
+      setIsLoading(true);
+      const solicitacoes = await listarSolicitacoes();
+      
+      // Verifica se há novas solicitações comparando com o estado anterior
+      const novasSolicitacoes = solicitacoes.filter(
+        solicitacao => !solicitacoesList.find(s => s.id === solicitacao.id)
+      );
+
+      if (novasSolicitacoes.length > 0) {
+        // Mostra notificação para cada nova solicitação
+        novasSolicitacoes.forEach(async (solicitacao) => {
+          await showNotification(
+            'Nova Solicitação de Carona',
+            `${solicitacao.nome} solicitou uma carona para ${solicitacao.destino}`
+          );
+        });
+      }
+
+      setSolicitacoesList(solicitacoes);
+      setFilteredSolicitacoes(solicitacoes);
+    } catch (error) {
+      console.error("Erro ao buscar solicitações de carona:", error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
   const handleSolicitaionSelect = (ride: SolicitacaoCaronaModel) => {
     setSelectedRide(ride);
     bottomSheetRef.current?.snapToPosition("65%");
   };
 
-  const buscarSolicitacoes = async () => {
-    try {
-      setIsLoading(true);
-      const solicitacoes = await listarSolicitacoes();
-      setSolicitacoesList(solicitacoes);
-      setFilteredSolicitacoes(solicitacoes);
-      console.log("Ofertas de carona:", solicitacoes);
-    } catch (error) {
-      console.error("Erro ao buscar solicitações de carona:", error);
-    } finally {
-      setIsLoading(false); // Desativa o carregamento
-      setIsRefreshing(false); // Desativa o refresh
-    }
-  };
-  useEffect(() => {
-    buscarSolicitacoes();
-  }, []);
+  // const buscarSolicitacoes = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const solicitacoes = await listarSolicitacoes();
+  //     setSolicitacoesList(solicitacoes);
+  //     setFilteredSolicitacoes(solicitacoes);
+  //     console.log("Ofertas de carona:", solicitacoes);
+  //   } catch (error) {
+  //     console.error("Erro ao buscar solicitações de carona:", error);
+  //   } finally {
+  //     setIsLoading(false); // Desativa o carregamento
+  //     setIsRefreshing(false); // Desativa o refresh
+  //   }
+  // };
+  // useEffect(() => {
+  //   buscarSolicitacoes();
+  // }, []);
 
   const loading = false;
 
