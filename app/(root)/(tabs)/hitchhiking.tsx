@@ -112,10 +112,14 @@ const Home = () => {
 
   const buscarSolicitacoes = async () => {
     try {
+      console.log("1");
       setIsLoading(true);
+      console.log("2");
       const solicitacoes = await listarSolicitacoes();
+      console.log("3");
       setSolicitacoesList(solicitacoes);
-      setFilteredSolicitacoes(solicitacoes);
+      console.log("4");
+      //setFilteredSolicitacoes(solicitacoes);
       console.log("Ofertas de carona:", solicitacoes);
     } catch (error) {
       console.error("Erro ao buscar solicitações de carona:", error);

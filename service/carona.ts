@@ -31,7 +31,6 @@ export const novaOferta = (params: NovaCaronaParams): Promise<void> => {
       },
     };
 
-    console.log(params.DataCarona);
     api
       .post("Carona/CadastroOfertaCarona", params, config)
       .then((response) => {
@@ -39,7 +38,6 @@ export const novaOferta = (params: NovaCaronaParams): Promise<void> => {
           resolve();
         } else {
           reject(response.data || "Erro ao enviar solicitação.");
-          console.log("Log" + response.data);
         }
       })
       .catch((error) => reject(error));
@@ -88,7 +86,7 @@ export const listarOfertasCaronas = (): Promise<OfertaCarona[]> => {
         if (response.data && response.ok) {
           resolve(response.data);
         }
-        reject(response.data);
+        resolve([]);
       })
       .catch((error) => reject(error));[]
       // .catch((error) => {
@@ -110,9 +108,9 @@ export const listarSolicitacoes = (): Promise<SolicitacaoCaronaModel[]> => {
         if (response.data && response.ok) {
           resolve(response.data);
         }
-        reject(response.data);
+        resolve([]);
       })
-      .catch((error) => reject(error));
+      .catch((error) => reject([]));
   });
 };
 
@@ -129,7 +127,7 @@ export const aprovarSolcitacao = (id: number): Promise<boolean> => {
         if (response.data && response.ok) {
           resolve(response.data);
         }
-        reject(response.data);
+        resolve(false);
       })
       .catch((error) => reject(error));
   });
